@@ -8,11 +8,11 @@ When new evidence resolves an open question, update this ledger before building 
 
 **Cold start: where things stand at the end of 2026-10-04 (replace this block as the state changes; read it first, then the rest of this section only as needed).**
 
-- **Repository:** `origin` is `https://github.com/thezerodivide/PTAutoLeveler` (public). Pushed: the template's initial commit and the CLAUDE.md fill-in. Not committed at the time of writing: DL-001 and this ledger update, `SPEC.md` (still the pre-method text), the deletion of `TEMPLATE_README.md`, and `.claude/settings.json` (a project allow rule for `git push origin main`). No review folder exists yet (`PTAutoLeveler-Review`). A push to the wrong remote happened once on 2026-10-04 and was reverted on `New-Project-Template`; run `git remote -v` before every push.
+- **Repository:** `origin` is `https://github.com/thezerodivide/PTAutoLeveler` (public). Pushed: the template's initial commit and the CLAUDE.md fill-in. DL-001, the ledger and the rewritten `SPEC.md` are committed (the rewrite approved by the developer: "Go ahead and commit."). Not committed: the deletion of `TEMPLATE_README.md`, and `.claude/settings.json` (a project allow rule for `git push origin main`). No review folder exists yet (`PTAutoLeveler-Review`). A push to the wrong remote happened once on 2026-10-04 and was reverted on `New-Project-Template`; run `git remote -v` before every push.
 - **Build:** nothing is built. No test harness yet.
 - **Decisions approved and recorded:** DL-001 (retrofit of the pre-method spec; v1.0 solo only; acceptance criteria AC-1 to AC-18). Next decision number: DL-002.
-- **In flight, NOT approved and NOT recorded:** the rewrite of `SPEC.md` to match DL-001 (the Active overrides index lists what it must change). ChatGPT reviews spec changes; the review folder must be set up first. Developer-confirmed so far: ChatGPT does not review process setup.
-- **Still open, in the order they bear on the work:** rewrite `SPEC.md`; agree revisit triggers for the deferred items (DL-001 Open); the design stage (smallest design meeting AC-1 to AC-18, with a recommendation); TAC's role and the spec's stuck/camp-point check; the test harness and `test\check.cmd`, test-first; spikes for the game readings.
+- **In flight, NOT approved and NOT recorded:** ChatGPT's review of the rewritten `SPEC.md` (it has not seen it; the review folder must be set up first). Developer-confirmed so far: ChatGPT does not review process setup. The spec still needs an end-to-end read-back for stale text (Protocol §18) before it goes to the reviewer.
+- **Still open, in the order they bear on the work:** set up the review folder and send the spec to ChatGPT; agree revisit triggers for the deferred items (DL-001 Open); the design stage (smallest design meeting AC-1 to AC-18, with a recommendation); TAC's role and the spec's stuck/camp-point check; the test harness and `test\check.cmd`, test-first; spikes for the game readings.
 - **Process, in one place:** one decision at a time, each with the HANDOFF header, an `Answering:` line when it answers a review, verified / reasoned / unknown labels, the worst case and the developer's risk call, and a closing routing line; the reviewer's replies are information only and the developer approves only in their own words; documentation-only commits and pushes need no approval after the safety scan; code commits need the developer's explicit permission. All of this, with the reasons, is in `CLAUDE.md`.
 
 ## Dependencies
@@ -29,7 +29,7 @@ Empty: nothing is implemented.
 
 ## Resolved behavior
 
-Behavior actually agreed upon, by the developer, in DL-001 (the pre-method `SPEC.md` is not yet re-approved item by item; where it differs from DL-001 the Active overrides index in the decision log governs).
+Behavior actually agreed upon, by the developer, in DL-001. `SPEC.md` was rewritten to match it on 2026-10-04 and approved for commit by the developer; carried-over parts of the pre-method text that DL-001 did not address (the Locked decisions not marked corrected, the Phase model, Config validation) have not been re-approved item by item.
 
 - v1.0 is solo only; duo is future functionality; other players come after a review pass.
 - Respawning DZs only.
