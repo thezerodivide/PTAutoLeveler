@@ -1,4 +1,4 @@
-# <PROJECT NAME> Decision Log
+# PTAutoLeveler Decision Log
 
 Maintained per [Development_Protocol.txt](Development_Protocol.txt) Section 2. This log records *why* material decisions were made and how they evolved. It is distinct from [SPEC.md](../SPEC.md) (*what* the system must do) — do not merge the two, and do not reconstruct this log from memory; append to it as decisions are made. It is append-only: a correction is a dated addendum, never a rewrite.
 
@@ -8,22 +8,74 @@ Each entry is structured into four labeled blocks per §2: **Requirement** (beha
 
 Entries below that supersede a specification item are indexed here so the supersession is visible without cross-referencing the whole log against the spec. Format: `**DL-nnn** SUPERSEDES SPEC.md <section or item>: <one line>`.
 
-(none yet)
+- **DL-001** SUPERSEDES SPEC.md Overview and Locked decision 14: v1.0 is solo only (the spec says solo and duo ship together).
+- **DL-001** SUPERSEDES (defers) SPEC.md Locked decisions 15-19, the "Solo and duo modes" section, build steps 8-10, and the duo status-window and stall items: duo is future functionality, not deleted.
+- **DL-001** SUPERSEDES (defers) SPEC.md "Self-explaining UI": a review pass before outside testers, not a v1.0 requirement.
+- **DL-001** SUPERSEDES SPEC.md Stall detection check 7 and the split rule: a PTAAPlanner error is an immediate stall; in a split phase a stall in either measurement counts as a stall.
+- **DL-001** SUPERSEDES SPEC.md lockout wording (Locked decision 7 and DZ rules): the lockout is per zone and per mode; v1.0 uses Respawning DZs only (30-minute lockout).
+- **DL-001** SUPERSEDES SPEC.md Stewardship "Server staff support full automation": reword to what the Discord chat (2026-09-29) supports.
+- **DL-001** SUPERSEDES SPEC.md delivery estimates (Overview): removed as non-requirements.
+
+`SPEC.md` has not yet been rewritten to match these lines; until it is, this index is the authority where they differ.
 
 ---
 
-### DL-001 — <title: the first story, or a retrofit of an existing spec>
+### DL-001 — PTAutoLeveler v1.0 (solo): retrofit of the pre-method SPEC.md, with approved acceptance criteria
 
 (For a later correction of this entry, do not edit it: append `**Addendum to DL-nnn, YYYY-MM-DD — <what changed and why>.**` at the end of the log.)
 
-- **Status:** <Draft / Approved YYYY-MM-DD / Superseded by DL-nnn>. **Approved by the developer in their own words:** '<exact words>' (quote them; a reviewer's clearance is not the developer's approval). Verification tier: <none / local / code review / live>.
-- **Story:** <the observed problem and what is actually known about it, before any solution is proposed>
-- **Requirement:** <behavior explicitly stated or approved; each item the developer approved>
-- **Design choices:** <the shape of the solution, agreed with the developer, with the reasoning>
-- **Implementation choices:** <details free to decide; timing values are first guesses under Protocol §15 with evidence and a revisit trigger>
-- **Open:** <unresolved items and what would resolve each>
-- **Evidence:** <Verified (tested or read in source: say where) / Reasoned, not verified / Unknown>
-- **Review chain:** <revisions presented, the secondary reviewer's findings, what was agreed or pushed back on>
-- **Depends on / Shares seams with:** <other DL entries, hook points, data or ordering constraints, or none>
-- **Not yet verified (do not describe as confirmed):** <list; update as items resolve>
-- **Supersedes:** <earlier entry or spec item (also add it to the Active overrides index), or nothing>
+- **Status:** Approved 2026-10-04. **Approved by the developer in their own words:** 'Approved as written.' (on the full draft of this entry, shown in the conversation; each criterion's own approval is quoted below). Verification tier: none (documentation only).
+- **Story:** PTAutoLeveler is a MacroQuest Lua orchestrator for Project Triune (RoF2 emu). It walks a character through an ordered, user-configured list of leveling and AA phases and hands combat, AA spending, item evolution and death recovery to existing scripts. `SPEC.md` (dated Sep 28, 2026) was written before this method, from a feasibility discussion not recorded anywhere, so this entry is a retrofit. Nothing in it was observed in a log. Developer observations are in-game only and noted as such.
+- **Requirement** (each item approved by the developer):
+  - **Scope.** "The initial release will be solo (one instance) only. Other players will be using it once we reach a stable enough state for outside testing, but initially it will be just me." "Duo is future functionality. v1.0 will include solo mode only." "The UI has to be functional for me, it will receive a review pass and updates before it would be made available for other players."
+  - **Plan creation:** "There will need to be a way to create a plan in the UI." A separate editor is not preferred, but acceptable if necessary.
+  - **DZ mode:** Respawning only. "We're not using Non-Respawning DZs due to both the length of the lockout, and that respawning is better for leveling as the mobs will respawn."
+  - **Entering a created DZ:** the runner enters it through the Priest of Triune. PTDeathRecovery handles deaths and uses the "Travel to Expedition" button.
+  - **Risk:** the developer judges the worst realistic outcome small ("a very small risk profile").
+  - **Acceptance criteria**, each approved with "Approved as written" (AC-1 as "Agreed with AC-1 Draft 3", AC-2 as "Agreed with AC-2", AC-3 as "Agreed as written", and the full list as "The list is complete for v1.0 solo"):
+    - **AC-1:** a plan can be created in the UI and loaded. It is checked against the Config validation rules before any action. An invalid plan halts with the phase and the reason. Start resolves the current phase from level and total assigned AAs, with strict ordering, shows it in the status window, and takes no in-game action.
+    - **AC-2:** the script reads the active DZ state from the game (none, matching, not matching), logs the decision, and takes no action.
+    - **AC-3:** a wrong DZ is left and confirmed gone. If leaving fails after the retry limit, it pauses with a named reason. It never creates a DZ here.
+    - **AC-4:** with no DZ active, the script reaches the phase's zone through the Bazaar waypoint map and confirms the zone. If not in the Bazaar, it first returns using the "Bazaar and Back" AA (`/alt activate 331`), after reading the zone, and never activates it while already in the Bazaar. It pauses with a named reason after the retry limit.
+    - **AC-5:** in the zone with no DZ active, the script goes to the Priest (`/nav`) and creates a Respawning DZ. It re-checks for an active DZ before every attempt, and confirms the DZ matches the zone and mode afterward. On a lockout for that zone and mode it pauses and never retries creation. It pauses with a named reason after the retry limit.
+    - **AC-6:** it enters the created DZ through the Priest and confirms the instance matches. A mismatch means wrong DZ, so it returns to evaluation and does not farm. It pauses with a named reason after the retry limit.
+    - **AC-7:** with an active matching DZ and the character not in it, the script gets back in and confirms the instance. It never creates a DZ in this case. It pauses with a named reason after the retry limit. The mechanism is not part of the criterion.
+    - **AC-8:** when a phase starts, it sets the AA XP % and confirms it. For a same-zone-and-DZ phase it changes only that value. It pauses with a named reason after the retry limit.
+    - **AC-9:** TAC is started only after the game confirms the instance matches, and is confirmed running. It pauses with a named reason after the retry limit.
+    - **AC-10:** when a phase's completion rule is met (level at or above target AND assigned AAs at or above target; omitted targets ignored), the script re-resolves, proceeds to the next phase (AA XP % change only if zone and DZ match), and stops with "plan done" when every phase is complete.
+    - **AC-11:** stall detection. 0% AA XP: no level XP gain within N minutes (a new level resets the counter). 100% AA XP: no AA XP gain within N minutes, or a PTAAPlanner error (an AA XP gain resets the counter; an error is an immediate stall). Split: a stall in either measurement counts as a stall. The timer is suspended while dead or PTDeathRecovery holds control. The log states the measurement used.
+    - **AC-12:** on a stall, in order, the first that applies: wrong zone or DZ → evaluation; TAC not running → start (retry); TAC paused → resume (retry); otherwise after a flat X-minute timer → return to the Bazaar, re-evaluate, count a bounce (no DZ rebuild); retries or per-phase bounces exhausted → pause with a named reason. The spec's check 5 (stuck/camp point) is left out on purpose and revisited "when we talk about TAC's role".
+    - **AC-13:** on death, the script yields to PTDeathRecovery, takes no action, suspends the stall timer, and re-evaluates from the start when control is released. It pauses with a named reason if control isn't released within a time limit.
+    - **AC-14:** in a phase with an assigned-AA target, it starts PTAAPlanner and confirms it running (pause after the retry limit). An error is an immediate stall. A plan exhausted with the target unmet pauses with a configuration error.
+    - **AC-15:** PTItemEvolver starts only if the plan turns it on. A failure to start gives a warning and farming continues. Its status never counts toward stall rules.
+    - **AC-16:** Start, Pause, Resume and Stop controls, and a status window showing phase (name and index), state and last-transition reason, zone and active DZ, level vs target, assigned vs target AAs and banked AAs, AA XP %, helper status (TAC, PTAAPlanner, PTItemEvolver, PTDeathRecovery), retry and bounce counters, and an error banner with the halt reason.
+    - **AC-17:** every state re-reads real game state on entry, has a timeout, counts retries, and pauses with a named error when either runs out.
+    - **AC-18:** `PTAL_<server>_<character>.log` under `macroquest/logs/PTAutoLeveler/`, the build version on every line, and every transition, command, decision reading, retry, stall, bounce, pause and halt logged with its reason, including where evidence ends.
+- **Design choices** (developer-stated or agreed):
+  - **Eligible zones:** a zone is eligible only if it has a Bazaar waypoint inside it, which avoids building routes to a DZ-creation point. Per the developer, "waypoint inside the zone" and the spec's "lands directly in the leveling zone" mean the same.
+  - **Log prefix:** `PTAL`. **Test harness:** written fresh for this project, test-first. "I'd rather just reuse the strategy" (only PTAutoRoute's testing strategy is borrowed).
+  - **Re-entry (AC-7):** two options, not chosen: copy PTDeathRecovery's method, or trigger PTDeathRecovery with `/echo You died.`.
+- **Implementation choices:** N, X, K, the retry limit, per-state timeouts and the PTDeathRecovery time limit are tunables. Their first values are implementation choices (Protocol §15), with no evidence yet. The log line format and the rotation size are implementation choices.
+- **Open:**
+  - **Game readings:** how the script reads DZ state, the AA XP % controls, TAC's state and the helpers' status. The spec lists these as spikes.
+  - **Messages and sequences:** the lockout refusal message text, and the Priest dialog sequence.
+  - **Cooldown:** whether `/alt activate 331` works when its refresh is not ready.
+  - **Re-entry:** the choice between the two options in AC-7.
+  - **TAC's role:** the spec's check 5 (stuck → camp point). Revisit trigger: the TAC-role discussion.
+  - **Pause, Resume and Stop:** what each does to the character and to TAC.
+  - **Plan completion:** what the script does with TAC and the character at completion.
+  - **Split revisit:** the split stall rule ("We may revisit this later once testing occurs", trigger: once testing occurs).
+  - **UI shape:** whether plan creation needs a separate editor window.
+  - **State machine:** the spec's diagram is missing, so the list of states is Open.
+  - **Deferred, each with a revisit trigger still to be agreed:** saving and loading named plans; helper version checks on start; PTAutoRoute second legs; all duo behavior; the self-explaining UI pass (review pass before outside testers); open-world farming.
+- **Evidence:**
+  - **Verified (read in the repo):** `SPEC.md` content, the PTAutoRoute layout and test strategy, PTDeathRecovery's README line about activating expedition travel, the repo list and visibility.
+  - **Developer-observed in game, no log:** the 30-minute Respawning lockout, the 14-hour Non-Respawning lockout, per-zone-and-mode lockouts, the Priest creating the DZ, entry through the Priest (`/say ready`) or the "Travel to Expedition" button, the Bazaar waypoint map, and the Priest being reachable from every waypoint landing via `/nav`.
+  - **Screenshots viewed:** the "Bazaar and Back" AA description (toggle behavior; refresh `0:02:00`), the Priest chat and the Expedition Information window, and the Discord chat.
+  - **Discord chat (2026-09-29):** shows the server owner acknowledging the design, but not explicit approval of full automation.
+  - **Reasoned, not verified:** the Mistmoore `56M` timer is the remainder of a 14-hour lockout.
+  - **Unknown:** everything under Open.
+- **Review chain:** developer-approved item by item in conversation (quotes above). ChatGPT has not seen this entry. The developer said it joins "if any spec changes are recommended"; the review-folder process in `CLAUDE.md` is not yet set up.
+- **Depends on / Shares seams with:** none (first entry). AC-4, AC-11, AC-12 and AC-13 share the "Bazaar and Back" use and the stall timer. AC-13 and AC-7 share the PTDeathRecovery interface.
+- **Not yet verified (do not describe as confirmed):** every game reading and mechanism in Open; `/alt activate 331` working on cooldown; the PTDeathRecovery `/echo You died.` trigger; any tunable's value; the lockout refusal text; the "Travel to Expedition" button's exact behavior; the staff statement as written in the spec.
+- **Supersedes:** SPEC.md Overview and Locked decision 14 (v1.0 is solo only); Locked decisions 15-19, the Solo and duo modes section, build steps 8-10 and the duo status-window and stall items (deferred); Self-explaining UI (deferred); stall check 7 and the split rule; the lockout wording (per zone and mode, Respawning only); the "Server staff support full automation" sentence; the delivery estimates. All indexed in the Active overrides index above.

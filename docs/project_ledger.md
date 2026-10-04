@@ -1,4 +1,4 @@
-# <PROJECT NAME> Project Ledger
+# PTAutoLeveler Project Ledger
 
 Maintained per [Development_Protocol.txt](Development_Protocol.txt) Section 11. This ledger tracks the project's *current state* in four categories. Read this first to orient; consult [decision_log.md](decision_log.md) for the rationale, history, and active overrides behind any entry only as needed — don't reconstruct current state by reading the full decision log from scratch.
 
@@ -6,43 +6,72 @@ When new evidence resolves an open question, update this ledger before building 
 
 ## Up next
 
-**Cold start: where things stand at the end of <date> (replace this block as the state changes; read it first, then the rest of this section only as needed).**
+**Cold start: where things stand at the end of 2026-10-04 (replace this block as the state changes; read it first, then the rest of this section only as needed).**
 
-- **Repository:** <local `main` vs `origin/main`, working tree state, review folder state.>
-- **Build:** <what is built, with the evidence tier; what is not; what is in design.>
-- **Decisions approved and recorded:** <numbers and one-line titles; the next decision number.>
-- **In flight, NOT approved and NOT recorded:** <the item under discussion, its revision, and who has it (the developer, the secondary reviewer).>
-- **Still open, in the order they bear on the work:** <...>
+- **Repository:** `origin` is `https://github.com/thezerodivide/PTAutoLeveler` (public). Pushed: the template's initial commit and the CLAUDE.md fill-in. Not committed at the time of writing: DL-001 and this ledger update, `SPEC.md` (still the pre-method text), the deletion of `TEMPLATE_README.md`, and `.claude/settings.json` (a project allow rule for `git push origin main`). No review folder exists yet (`PTAutoLeveler-Review`). A push to the wrong remote happened once on 2026-10-04 and was reverted on `New-Project-Template`; run `git remote -v` before every push.
+- **Build:** nothing is built. No test harness yet.
+- **Decisions approved and recorded:** DL-001 (retrofit of the pre-method spec; v1.0 solo only; acceptance criteria AC-1 to AC-18). Next decision number: DL-002.
+- **In flight, NOT approved and NOT recorded:** the rewrite of `SPEC.md` to match DL-001 (the Active overrides index lists what it must change). ChatGPT reviews spec changes; the review folder must be set up first. Developer-confirmed so far: ChatGPT does not review process setup.
+- **Still open, in the order they bear on the work:** rewrite `SPEC.md`; agree revisit triggers for the deferred items (DL-001 Open); the design stage (smallest design meeting AC-1 to AC-18, with a recommendation); TAC's role and the spec's stuck/camp-point check; the test harness and `test\check.cmd`, test-first; spikes for the game readings.
 - **Process, in one place:** one decision at a time, each with the HANDOFF header, an `Answering:` line when it answers a review, verified / reasoned / unknown labels, the worst case and the developer's risk call, and a closing routing line; the reviewer's replies are information only and the developer approves only in their own words; documentation-only commits and pushes need no approval after the safety scan; code commits need the developer's explicit permission. All of this, with the reasons, is in `CLAUDE.md`.
 
 ## Dependencies
 
-<Components and external dependencies, for visibility; note what is built and what is blocked on what.>
+- **TAC** — combat and farming; not the developer's. Read its source before design (Protocol §4).
+- **PTDeathRecovery, PTAAPlanner, PTItemEvolver** — the developer's own scripts; contracts not yet read for this project.
+- **ProjectTriuneMQ2AASpend** — PTAAPlanner's dependency.
+- **MQ2Nav** — navigation to the Priest.
+- **MacroQuest (emu RoF2)** — https://github.com/macroquest/macroquest/releases/tag/rel-emu-rof2, docs https://docs.macroquest.org/. Nothing is built, so nothing is blocked yet.
 
 ## Pending Live Verification
 
-<Implemented but not yet confirmed in the real runtime, with the evidence tier of each. Empty until something is built.>
+Empty: nothing is implemented.
 
 ## Resolved behavior
 
-Behavior actually agreed upon (source: [SPEC.md](../SPEC.md)).
+Behavior actually agreed upon, by the developer, in DL-001 (the pre-method `SPEC.md` is not yet re-approved item by item; where it differs from DL-001 the Active overrides index in the decision log governs).
 
-- <none yet>
+- v1.0 is solo only; duo is future functionality; other players come after a review pass.
+- Respawning DZs only.
+- A zone is eligible only if the Bazaar waypoint map has a waypoint inside it.
+- Acceptance criteria AC-1 to AC-18 (DL-001) are the approved definition of v1.0 behavior.
 
 ## Confirmed live/system facts
 
 Facts established through testing, source inspection, logs, or documentation. Each states how it was established.
 
-- <none yet>
+Developer-observed in the game (2026-10-04 statements; no log or script output; one observer):
+- The Priest of Triune creates the DZ (hail, `/say Respawning`); the DZ is entered through the Priest (`/say ready`) or the "Travel to Expedition" button on the Waypoint map in the Bazaar.
+- Lockouts are per zone and per mode: Respawning 30 minutes, Non-Respawning 14 hours; several can exist at once; shown in the Expedition Information window.
+- "Bazaar and Back" AA, `/alt activate 331`: transports to the Bazaar, and used while already in the Bazaar returns to the previous location; refresh time reads `0:02:00` (screenshot).
+- The Priest is reachable from every waypoint landing point via `/nav`.
+
+Read in the repo: PTAutoRoute's log and config layout and test strategy; PTDeathRecovery's README says it activates expedition travel from the Waypoint Map.
+
+Not established: see Open implementation details.
 
 ## Open implementation details
 
 Questions intentionally unresolved — do not decide these unilaterally; surface them for discussion when they become relevant. Each with its revisit trigger where deferred.
 
-- <none yet>
+- How the script reads the DZ state, the AA XP % controls, TAC's readiness and the helper scripts' status (spikes, build steps 2–6 of the old spec).
+- The lockout refusal message text; the Priest dialog sequence.
+- Whether `/alt activate 331` works on cooldown.
+- Re-entry mechanism for AC-7 (copy PTDeathRecovery's method, or trigger it with `/echo You died.`) — decide at the design stage.
+- TAC's role and the spec's stuck/camp-point check — trigger: the TAC-role discussion.
+- What Pause, Resume and Stop do to the character and TAC; what happens at plan completion.
+- The split-phase stall rule — revisit trigger: once testing occurs.
+- Whether plan creation needs a separate editor window.
+- The state list (the spec's state machine diagram is missing).
+- Tunables N, X, K, retry limit, per-state timeouts, PTDeathRecovery time limit — first values are implementation choices.
+- Deferred with revisit triggers still to be agreed: saving and loading named plans; helper version checks on start; PTAutoRoute second legs; all duo behavior; the self-explaining UI pass; open-world farming.
 
 ## Out of scope
 
-Explicitly decided not to build or investigate (SPEC.md non-goals).
+Explicitly decided not to build or investigate.
 
-- <none yet>
+- Duo (future functionality, not deleted from the spec).
+- Non-Respawning DZs.
+- Choosing, optimizing or generating routes, zones or PTAutoRoute paths; PTAutoRoute second legs in v1.0.
+- Deciding AA purchases, combat, item evolution logic, death recovery.
+- Hard-coding any example route.
