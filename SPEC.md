@@ -46,7 +46,7 @@ Nothing below has been checked by a script or a log. All are the developer's own
 
 ## Locked design decisions
 
-These were settled in the feasibility discussion (not recorded at the time). Each is a hard rule unless marked.
+These were settled in the feasibility discussion (not recorded at the time). Each is a hard rule unless marked. [CLARIFIED 2026-10-04, DL-001: decisions 1–6, 8–11 and 13 are carried over from the first draft and have not been re-approved one by one under this method; DL-001 approved the v1.0 scope and acceptance criteria AC-1 to AC-18, and where a decision here conflicts with an acceptance criterion, the acceptance criterion governs.]
 
 | # | Topic | Decision |
 | --- | --- | --- |
@@ -84,7 +84,19 @@ A plan is an ordered list of phases. Each phase has these fields:
 | waypoint | Yes | Bazaar waypoint; must land directly in the leveling zone. |
 | autoRoute | No | Reserved for a later version; not supported in v1.0. |
 
-The fields list the zones eligible to use; they are not a route description.
+The zone and waypoint fields define which zones are eligible; they are not a route description.
+
+**Illustrative example plan** (an illustrative example of what a plan could look like; not a requirement and not a hard-coded route). Columns: Zone, Min Level, Target Level, XP to AA %, Assigned AA target. [CLARIFIED 2026-10-04, DL-001: the developer's "AA Spent Target" is read as `targetAssignedAA` (assigned, not banked). Each phase's zone shortname, DZ name and waypoint are omitted here.]
+
+| # | Zone | Min level | Target level | AA XP % | Assigned AA target |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Blackburrow | 1 | 15 | 0 | none |
+| 2 | Castle Mistmoore | 15 | 30 | 0 | none |
+| 3 | Lower Guk | 30 | 30 | 100 | 800 |
+| 4 | Lower Guk | 30 | 35 | 0 | none |
+| 5 | The Hole | 35 | 50 | 0 | none |
+| 6 | Umbral Plains | 50 | 50 | 100 | 2,400 |
+| 7 | Umbral Plains | 50 | 65 | 0 | none |
 
 **Phase resolution (on start, resume, and after every phase completion)**
 
@@ -93,7 +105,7 @@ The fields list the zones eligible to use; they are not a route description.
 3. If the character's level is below that phase's minLevel → config error, halt.
 4. If every phase is complete → done.
 
-**Worked example.** A level 52 character with 1,000 assigned AAs, using the example plan, resolves to the Umbral Plains 50→50 / 2,400 AA phase and farms at 100% AA XP. This is intended.
+**Worked example.** A level 52 character with 1,000 assigned AAs, using the illustrative example plan above, resolves to phase 6 (Umbral Plains 50→50 / 2,400 AA) and farms at 100% AA XP. This is intended. Phases 1–5 are complete (the levels and the 800 AA target are met); phase 6's 2,400 AA target is not.
 
 **Same-instance transitions.** If the next phase has the same zoneShortName and dzName, update AA XP % and keep farming. No travel, no DZ change.
 
@@ -235,7 +247,7 @@ Approved by the developer item by item, DL-001. Each says what is checkable loca
 
 ## Open unknowns and tunables
 
-Each unknown is resolved by an in-game spike during the build step that needs it. [CORRECTED 2026-10-04, DL-001: rows for the duo handshakes were moved to the deferred duo section; step numbers in the original refer to the first draft's build order, which is itself reconsidered at the design stage.]
+Each unknown is resolved by an in-game spike during the build step that needs it. [CORRECTED 2026-10-04, DL-001: the rows for the duo unknowns (cross-client messaging, the killer joining the DZ, detecting a broken group, and whether PTItemEvolver progress is XP- or kill-driven) were moved to the deferred duo section; step numbers in the original refer to the first draft's build order, which is itself reconsidered at the design stage.]
 
 | Unknown | Notes |
 | --- | --- |
@@ -251,6 +263,7 @@ Each unknown is resolved by an in-game spike during the build step that needs it
 | TAC's role and the stuck/camp-point check | Revisit when TAC's role is discussed. |
 | What Pause, Resume and Stop do; what happens at plan completion | |
 | Whether plan creation needs a separate editor window | |
+| Whether the stored `dzName` includes the "(Respawning)" suffix the game shows | The game names the expedition "The Umbral Plains (Respawning)" (developer's screenshot). |
 | The state list | The diagram is missing (see State machine). |
 
 **Tunables** (initial values are implementation detail, tuned from logs):
@@ -286,7 +299,7 @@ PTAutoLeveler should be a good citizen of the game world at scale. [CORRECTED 20
 
 Each step is testable in game on its own; steps 1–2 resolve most unknowns cheaply.
 
-1. Plan loader, validator, phase resolver and status UI. Read-only.
+1. Plan loader, validator, phase resolver and status UI. No in-game action. [CLARIFIED 2026-10-04, DL-001: was "Read-only"; AC-1 includes creating a plan in the UI.]
 2. DZ detection, identification and leaving.
 3. Travel: return to Bazaar and direct waypoint to the leveling zone.
 4. Priest of Triune create/enter, pre-create DZ re-check and lockout detection.
