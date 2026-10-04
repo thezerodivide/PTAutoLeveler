@@ -2,7 +2,7 @@
 
 Originally drafted Sep 28, 2026 · @Shane. Rewritten 2026-10-04 to match [DL-001](docs/decision_log.md) (v1.0 is solo only; acceptance criteria AC-1 to AC-18).
 
-**How to read this document.** Corrections are visible: `[CORRECTED 2026-10-04, DL-001: ...]` marks text that replaces earlier text, `[CLARIFIED 2026-10-04, DL-001: ...]` marks a refinement, and `[DEFERRED]` marks content kept but not part of v1.0. The decision log's Active overrides index lists every supersession. Developer-stated facts are labeled with their evidence tier; nothing here has been verified by a script or a log unless it says so.
+**How to read this document.** Corrections are visible: `[CORRECTED 2026-10-04, DL-001: ...]` marks text that replaces earlier text, `[CLARIFIED 2026-10-04, DL-001: ...]` marks a refinement, and `[DEFERRED]` marks content kept but not part of v1.0. The decision log's Active overrides index identifies superseded specification behavior. Clarifications and newly identified open questions are recorded in DL-001 and its dated addenda. Developer-stated facts are labeled with their evidence tier; nothing here has been verified by a script or a log unless it says so.
 
 ## Overview
 
@@ -107,7 +107,7 @@ The zone and waypoint fields define which zones are eligible; they are not a rou
 
 **Worked example.** A level 52 character with 1,000 assigned AAs, using the illustrative example plan above, resolves to phase 6 (Umbral Plains 50→50 / 2,400 AA) and farms at 100% AA XP. This is intended. Phases 1–5 are complete (the levels and the 800 AA target are met); phase 6's 2,400 AA target is not.
 
-**Same-instance transitions.** If the next phase has the same zoneShortName and dzName, update AA XP % and keep farming. No travel, no DZ change.
+**Same-instance transitions.** If the next phase has the same zoneShortName and dzName, update AA XP % and keep farming. No travel, no DZ change. [CLARIFIED 2026-10-04, DL-001 addendum: "no travel and no DZ action" is what the same-instance rule excludes. Helper actions that the next phase requires (AC-14, AC-15) still apply. Whether PTAAPlanner stops on a move from an AA phase to a level-only phase is Open.]
 
 ## Config validation
 
@@ -167,7 +167,9 @@ A stall is no meaningful progress while farming (AC-11).
 - **Suspension:** the stall timer is suspended while the character is dead or PTDeathRecovery holds control, and resumes when control returns.
 - The log states which measurement was read and why a stall was concluded.
 
-**On a stall (AC-12)**, check in order and act on the first that applies:
+**PTAAPlanner error precedence.** [CLARIFIED 2026-10-04, DL-001 addendum, approved by the developer] A detected PTAAPlanner error is an immediate stall. Its remedy takes precedence over AC-12's TAC recovery and Bazaar-bounce checks: pause with a reason identifying PTAAPlanner and including its reported error text when it is available. It does not trigger a restart or a Bazaar bounce. AC-13's death-recovery yield still governs while the character is dead or PTDeathRecovery holds control. How the script detects a PTAAPlanner error is Open (see Open unknowns).
+
+**On a stall (AC-12)**, check in order and act on the first that applies (a PTAAPlanner error is handled first, as above):
 
 1. Wrong zone or DZ instance → go to Evaluate.
 2. TAC not running → start it, count a retry.
@@ -181,7 +183,7 @@ A stall is no meaningful progress while farming (AC-11).
 
 ## Supporting script contract
 
-Only one script drives the character at a time. PT scripts share a small contract, ideally over MQ Lua actors.
+Only one script drives the character at a time. PT scripts share a small contract, ideally over MQ Lua actors. [CLARIFIED 2026-10-04, DL-001 addendum: the contract below is a proposed interface, not yet verified to exist in the helper scripts. The developer has said PTAAPlanner's README is out of date; its current functionality is to be discussed separately.]
 
 - **Status:** `idle / running / busy / paused / error / done`
 - **Commands:** `start / pause / resume / stop`
@@ -226,6 +228,8 @@ A plan must be creatable in the UI (AC-1). A separate editor window is not prefe
 
 Approved by the developer item by item, DL-001. Each says what is checkable locally by a test and what only live.
 
+[CLARIFIED 2026-10-04, DL-001 addendum, approved by the developer] AC-1 and AC-2 are the evaluation stages of a single Start run and issue no game actions themselves. When evaluation succeeds and the plan has an incomplete phase, the same run proceeds to the applicable action stages according to the observed game state. An invalid plan halts; an already-complete plan follows AC-10's "plan done" outcome. Each evaluation stage can also be built and tested independently.
+
 - **AC-1:** a plan can be created in the UI and loaded. It is checked against the Config validation rules before any action; an invalid plan halts with the phase and reason. Start resolves the current phase from level and total assigned AAs, with strict ordering, shows it in the status window, and takes no in-game action. *Local: validator, resolver. Live: real level and AA readings, the UI.*
 - **AC-2:** the script reads the active DZ state from the game (none, matching, not matching), logs the decision, and takes no action. *Local: decision logic. Live: the reading.*
 - **AC-3:** a wrong DZ is left and confirmed gone. If leaving fails after the retry limit, it pauses with a named reason. It never creates a DZ here. *Local: decision and retry logic. Live: the leave and its confirmation.*
@@ -233,13 +237,13 @@ Approved by the developer item by item, DL-001. Each says what is checkable loca
 - **AC-5:** in the zone with no DZ active, the script goes to the Priest (`/nav`) and creates a Respawning DZ. It re-checks for an active DZ before every attempt and confirms the DZ matches the zone and mode afterward. On a lockout for that zone and mode it pauses and never retries creation. It pauses with a named reason after the retry limit. *Local: re-check, retry, pause. Live: the Priest interaction, the lockout indication.*
 - **AC-6:** it enters the created DZ through the Priest and confirms the instance matches. A mismatch means wrong DZ: return to evaluation, do not farm. It pauses with a named reason after the retry limit. *Local: match decision. Live: entry.*
 - **AC-7:** with an active matching DZ and the character not in it, the script gets back in and confirms the instance. It never creates a DZ in this case. It pauses with a named reason after the retry limit. The mechanism is not part of the criterion. *Local: decision logic. Live: re-entry.*
-- **AC-8:** when a phase starts, it sets the AA XP % and confirms it. For a same-zone-and-DZ phase it changes only that value. It pauses with a named reason after the retry limit. *Local: decision and retry. Live: setting and reading the value.*
+- **AC-8:** when a phase starts, it sets the AA XP % and confirms it. For a same-zone-and-DZ phase it changes only that value. It pauses with a named reason after the retry limit. [CLARIFIED 2026-10-04, DL-001 addendum: "only that value" means no travel and no DZ action; helper actions the next phase requires (AC-14, AC-15) still apply.] *Local: decision and retry. Live: setting and reading the value.*
 - **AC-9:** TAC starts only after the game confirms the instance matches the phase, and is confirmed running. It pauses with a named reason after the retry limit. *Local: the start rule. Live: TAC's state.*
 - **AC-10:** when a phase's completion rule is met (level ≥ target AND assigned AAs ≥ target; omitted targets ignored), the script re-resolves, proceeds to the next phase (AA XP % change only if zone and DZ match), and stops with "plan done" when every phase is complete. *Local: check, re-resolution, done decision. Live: real readings.*
 - **AC-11:** stall detection as described under Stall detection. *Local: rules, resets, immediate stall, suspension, timer. Live: real XP values and helper states.*
-- **AC-12:** the stall remedies as described under Stall detection. *Local: order of checks, counters, pause rules. Live: TAC's state, the actions.*
+- **AC-12:** the stall remedies as described under Stall detection. [CLARIFIED 2026-10-04, DL-001 addendum: a PTAAPlanner error is handled first, with a pause and no Bazaar bounce.] *Local: order of checks, counters, pause rules. Live: TAC's state, the actions.*
 - **AC-13:** on death, the script yields to PTDeathRecovery, takes no action, suspends the stall timer, and re-evaluates from the start when control is released. It pauses with a named reason if control is not released within a time limit. *Local: yield, re-evaluate, limit. Live: death detection, the real return.*
-- **AC-14:** in a phase with an assigned-AA target, it starts PTAAPlanner and confirms it running (pause after the retry limit). An error is an immediate stall. A plan exhausted with the target unmet pauses with a configuration error. *Local: start, retry, pause. Live: PTAAPlanner's real status.*
+- **AC-14:** in a phase with an assigned-AA target, it starts PTAAPlanner and confirms it running (pause after the retry limit). An error is an immediate stall, and its remedy is a pause naming PTAAPlanner (see Stall detection; [CLARIFIED 2026-10-04, DL-001 addendum]). A plan exhausted with the target unmet pauses with a configuration error. *Local: start, retry, pause. Live: PTAAPlanner's real status.*
 - **AC-15:** PTItemEvolver starts only if the plan turns it on. A failure to start gives a warning and farming continues. Its status never counts toward stall rules. *Local: on/off, warn-and-continue. Live: its real status.*
 - **AC-16:** the controls and status window listed under UI. *Local: field selection, error-to-banner mapping (if the UI logic is separate from drawing). Live: appearance and behavior in ImGui.*
 - **AC-17:** the per-state contract (re-read, timeout, retry count, named pause). *Local: counters, clock. Live: real readings.*
@@ -263,6 +267,10 @@ Each unknown is resolved by an in-game spike during the build step that needs it
 | TAC's role and the stuck/camp-point check | Revisit when TAC's role is discussed. |
 | What Pause, Resume and Stop do; what happens at plan completion | |
 | Whether plan creation needs a separate editor window | |
+| PTItemEvolver on/off setting (AC-15) | Plan-wide or per phase. The model and UI follow the agreed answer. |
+| Whether PTAAPlanner stops on a move from an AA phase to a level-only phase | Same-instance transitions. |
+| How the script reliably detects PTAAPlanner errors and plan exhaustion | Identify the PTAAPlanner version and source revision being integrated, inspect its status and lifecycle paths, and spike where source inspection does not establish the runtime behavior. A grep of `aaplanner.lua` found no MQ Lua actor or published status interface (not a full read); the developer says its README is out of date. |
+| Meaning of "every state has a timeout" (AC-17) for FARM and for a user-initiated pause | The state list is open; the approved AC-17 wording is unchanged. |
 | Whether the stored `dzName` includes the "(Respawning)" suffix the game shows | The game names the expedition "The Umbral Plains (Respawning)" (developer's screenshot). |
 | The state list | The diagram is missing (see State machine). |
 
@@ -291,7 +299,7 @@ PTAutoLeveler should be a good citizen of the game world at scale. [CORRECTED 20
 - **Rate-limited interactions.** Small delays and backoff on Priest of Triune, waypoint and AA window actions.
 - **Clear docs on what it does not do.** Instance-only, no open-world farming, no DZ rebuilds, no route or AA decisions.
 - **Useful logs.** Every transition, retry, bounce and halt reason.
-- **Helper version checks.** [DEFERRED] Verify compatible versions of TAC and PTAAPlanner on start; pause with a clear message on mismatch. Revisit trigger: the review pass before outside testers.
+- **Helper version checks.** [DEFERRED] Verify compatible versions of TAC and PTAAPlanner on start; pause with a clear message on mismatch. Revisit trigger (proposed, not approved by the developer): the review pass before outside testers.
 
 ## Build order
 
@@ -316,7 +324,7 @@ Each step is testable in game on its own; steps 1–2 resolve most unknowns chea
 
 ## Future functionality: duo [DEFERRED]
 
-Not part of v1.0 (DL-001: "Duo is future functionality"). The first draft's design is kept here so it is not lost; it is not approved and was written before the rest of this spec changed. It must be re-baselined against the spec when duo is taken up. Revisit trigger: v1.0 is stable and outside testing has begun.
+Not part of v1.0 (DL-001: "Duo is future functionality"). The first draft's design is kept here so it is not lost; it is not approved and was written before the rest of this spec changed. It must be re-baselined against the spec when duo is taken up. Revisit trigger (proposed, not approved by the developer): v1.0 is stable and outside testing has begun.
 
 Duo was one killer plus one leveler. Solo was to be duo with both roles on one character.
 
