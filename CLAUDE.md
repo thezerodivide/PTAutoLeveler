@@ -185,8 +185,8 @@ All on https://github.com/thezerodivide, all Project Triune / MacroQuest, all th
 
 - **PTAutoRoute** — route recording and travel. Prior art for module layout and the pure-logic-plus-MQ-adapter pattern; the test *strategy* only is borrowed here (see Testing).
 - **PTDeathRecovery** — death recovery; the verified `/ac status` query-guard pattern for talking to TAC.
-- **PTAAPlanner** — AA planning and automatic purchasing (uses ProjectTriuneMQ2AASpend).
-- **ProjectTriuneMQ2AASpend** — Project Triune compatibility build of MQ2AASpend.
+- **PTAAPlanner** — AA planning and automatic purchasing. Native Lua spender; v0.2 and later has no MQ2AASpend dependency; this project supports v1.0.0 and above only.
+- **ProjectTriuneMQ2AASpend** — Project Triune compatibility build of MQ2AASpend, used by older PTAAPlanner releases only; not a dependency of this project.
 - **PTItemEvolver** — item evolution queue management.
 - **AutoInvAutoDZAdd** — group invites and DZ membership by tell; possible prior art for DZ handling.
 - **SpellSpree** — spell buying and scribing; originally written by @Heeby, taken over by the developer with permission.

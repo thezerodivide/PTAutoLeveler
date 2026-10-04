@@ -183,7 +183,7 @@ A stall is no meaningful progress while farming (AC-11).
 
 ## Supporting script contract
 
-Only one script drives the character at a time. PT scripts share a small contract, ideally over MQ Lua actors. [CLARIFIED 2026-10-04, DL-001 addendum: the contract below is a proposed interface, not yet verified to exist in the helper scripts. The developer has said PTAAPlanner's README is out of date; its current functionality is to be discussed separately.]
+Only one script drives the character at a time. PT scripts share a small contract, ideally over MQ Lua actors. [CLARIFIED 2026-10-04, DL-001 addendum: the contract below is a proposed interface, not yet verified to exist in the helper scripts. [CORRECTED 2026-10-04, DL-001 third addendum: an earlier version of this note said the developer called PTAAPlanner's README out of date; that was a misreading and is withdrawn.] Integration targets PTAAPlanner v1.0.0 and above; interface details remain Open. PTAutoLeveler supports PTAAPlanner v1.0.0 and above only (developer requirement); PTAAPlanner v0.2 and later has no MQ2AASpend dependency.]
 
 - **Status:** `idle / running / busy / paused / error / done`
 - **Commands:** `start / pause / resume / stop`
@@ -269,7 +269,8 @@ Each unknown is resolved by an in-game spike during the build step that needs it
 | Whether plan creation needs a separate editor window | |
 | PTItemEvolver on/off setting (AC-15) | Plan-wide or per phase. The model and UI follow the agreed answer. |
 | Whether PTAAPlanner stops on a move from an AA phase to a level-only phase | Same-instance transitions. |
-| How the script reliably detects PTAAPlanner errors and plan exhaustion | Identify the PTAAPlanner version and source revision being integrated, inspect its status and lifecycle paths, and spike where source inspection does not establish the runtime behavior. A grep of `aaplanner.lua` found no MQ Lua actor or published status interface (not a full read); the developer says its README is out of date. |
+| How the script reliably detects PTAAPlanner errors and plan exhaustion | Identify the PTAAPlanner version and source revision being integrated, inspect its status and lifecycle paths, and spike where source inspection does not establish the runtime behavior. A grep of `aaplanner.lua` found no MQ Lua actor or published status interface (not a full read). [CORRECTED 2026-10-04, DL-001 third addendum: an earlier version said the developer called the README out of date; that was a misreading and is withdrawn.] |
+| How PTAutoLeveler enables and confirms PTAAPlanner Auto Spend, and how the configured purchase safety checks interact with TAC's activity | The README describes a UI control for enabling Auto Spend; an external activation mechanism has not been established. Inspect the relevant source paths and use a spike where runtime behavior remains unresolved. |
 | Meaning of "every state has a timeout" (AC-17) for FARM and for a user-initiated pause | The state list is open; the approved AC-17 wording is unchanged. |
 | Whether the stored `dzName` includes the "(Respawning)" suffix the game shows | The game names the expedition "The Umbral Plains (Respawning)" (developer's screenshot). |
 | The state list | The diagram is missing (see State machine). |
@@ -299,7 +300,7 @@ PTAutoLeveler should be a good citizen of the game world at scale. [CORRECTED 20
 - **Rate-limited interactions.** Small delays and backoff on Priest of Triune, waypoint and AA window actions.
 - **Clear docs on what it does not do.** Instance-only, no open-world farming, no DZ rebuilds, no route or AA decisions.
 - **Useful logs.** Every transition, retry, bounce and halt reason.
-- **Helper version checks.** [DEFERRED] Verify compatible versions of TAC and PTAAPlanner on start; pause with a clear message on mismatch. Revisit trigger (proposed, not approved by the developer): the review pass before outside testers.
+- **Helper version checks.** [DEFERRED] Verify compatible versions of TAC and PTAAPlanner on start; pause with a clear message on mismatch. Revisit trigger (proposed, not approved by the developer): the review pass before outside testers. The minimum supported PTAAPlanner version (v1.0.0, see Supporting script contract) is a compatibility rule this check would enforce; the deferral does not defer or waive the supported-version requirement.
 
 ## Build order
 
